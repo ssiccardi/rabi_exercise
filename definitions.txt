@@ -1,0 +1,12 @@
+Simulation and Validation of a Driven Two-Level Quantum System
+
+The physics
+
+Consider a system with Hamiltonian
+ H = \omega / 2 \sigma_z + \Omega \sigma_x
+
+ where \omega = energy splitting, \Omega = driving term, 
+ \sigma_x \sigma_z = Pauli matrices
+
+ We want to simulate the evolution:
+ |psi(t)> = exp(-iHt) |psi(0)>
