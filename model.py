@@ -99,7 +99,7 @@ def test_analytical_vs_numerical():
         psi = evolve_states(psi0, H, t)
         p_numerical = probabilities(psi)
         p_analytical = analytical_probabilities(omega, Omega, t)
-        assert np.allclose(p_numerical, p_analytical)
+        assert np.allclose(p_numerical, p_analytical, atol=1e-10)
     print("Test analytical vs numerical passed.")
 
 def test_fidelity():
@@ -113,7 +113,7 @@ def test_fidelity():
     fidelity = np.abs(np.vdot(psi0, psi))**2
     assert 0.0 <= fidelity <= 1.0
     print("Test fidelity passed.")
-    psi_target = np.array([0.0, 0.1])
+    psi_target = np.array([0.0, 1.0])
     fidelity_target = np.abs(np.vdot(psi_target, psi))**2
     fidelities = []
     for t in np.linspace(0, 10, 100):
@@ -129,7 +129,7 @@ def test_fidelity():
     plt.show()
 
 def test_resonant():
-    # test the system at resonance (omega = Omega)
+    # test the system with resonant driving (omega = 0)
     psi0 = np.array([1.0, 0.0])
     psi_target = np.array([0.0, 1.0])
     omega = 0.0
