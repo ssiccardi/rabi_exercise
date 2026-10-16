@@ -30,6 +30,16 @@ def evolve_states(psi0, H, t):
 def probabilities(psi):
     return abs(psi)**2
 
+def bloch_vector(psi):
+    # Compute the Bloch vector for a given two-level state psi
+    sigma_x = np.array([[0, 1], [1, 0]])
+    sigma_y = np.array([[0, -1j], [1j, 0]])
+    sigma_z = np.array([[1, 0], [0, -1]])
+    x = np.real(np.vdot(psi, sigma_x @ psi))
+    y = np.real(np.vdot(psi, sigma_y @ psi))
+    z = np.real(np.vdot(psi, sigma_z @ psi))
+    return np.array([x, y, z])
+
 # planned tests
 # Test that the evolved state remains normalized
 def test_normalization():
@@ -41,17 +51,8 @@ def test_normalization():
     psi = evolve_states(psi0, H, t)
     assert np.isclose(np.linalg.norm(psi), 1.0)
     print("Test normalization passed.")
-#psi0 = np.array([1.0, 0.0])
-#omega = 1.0
-#Omega = 1.0
-#H = Hamiltonian(omega, Omega)
-##t = 1.0
-#psi = evolve_states(psi0, H, t)
-##print(probabilities(psi), psi, psi0)
-#assert np.isclose(
-#    np.linalg.norm(psi),
-#    1.0
-#)
+
+def plot_probabilities(psi0, H):
     probabilities_list = []
     for t in np.linspace(0, 10, 100):
         psi = evolve_states(psi0, H, t)
@@ -65,6 +66,24 @@ def test_normalization():
     plt.xlabel('Time')
     plt.ylabel('Probability')
     plt.legend()
+    plt.show()
+
+def plot_bloch_vector(psi0, H):
+    bloch_positions = []
+    for t in np.linspace(0, 4, 100):
+        psi = evolve_states(psi0, H, t)
+        bloch_positions.append(bloch_vector(psi))
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    for bloch in bloch_positions:
+        #ax.quiver(0, 0, 0, bloch[0], bloch[1], bloch[2], length=1.0, normalize=True)
+        ax.scatter(bloch[0], bloch[1], bloch[2], color='r')
+    ax.set_xlim([-1, 1])
+    ax.set_ylim([-1, 1])
+    ax.set_zlim([-1, 1])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
     plt.show()
 
 def test_unitary():
@@ -113,8 +132,8 @@ def test_fidelity():
     fidelity = np.abs(np.vdot(psi0, psi))**2
     assert 0.0 <= fidelity <= 1.0
     print("Test fidelity passed.")
-    psi_target = np.array([0.0, 1.0])
-    fidelity_target = np.abs(np.vdot(psi_target, psi))**2
+
+def plot_fidelity_with_target(psi0, H, psi_target):
     fidelities = []
     for t in np.linspace(0, 10, 100):
         psi = evolve_states(psi0, H, t)
@@ -141,6 +160,18 @@ def test_resonant():
     assert np.isclose(F, 1.0)
     print("Test resonant passed.")
 
+def test_bloch_vector():
+    # test that the Bloch vector has length 1 for normalized states
+    psi0 = np.array([1.0, 0.0])
+    omega = 1.0
+    Omega = 1.0
+    H = Hamiltonian(omega, Omega)
+    t = 1.0
+    psi = evolve_states(psi0, H, t)
+    bloch = bloch_vector(psi)
+    assert np.isclose(np.linalg.norm(bloch), 1.0)
+    print("Test Bloch vector passed.")
+
 if __name__ == "__main__":
     test_normalization()
     test_unitary()
@@ -148,3 +179,10 @@ if __name__ == "__main__":
     test_analytical_vs_numerical()
     test_fidelity()
     test_resonant()
+    test_bloch_vector()
+    psi0 = np.array([1.0, 0.0])
+    H = Hamiltonian(1.0, 1.0)
+    plot_probabilities(psi0, H)
+    psi_target = np.array([0.0, 1.0])
+    plot_fidelity_with_target(psi0, H, psi_target)
+    plot_bloch_vector(psi0, H)
