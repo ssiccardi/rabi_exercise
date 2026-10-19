@@ -67,3 +67,13 @@ quali test abbiamo proposto;
 quali verifiche fisiche abbiamo ritenuto importanti.
 
 Secondo me lì emergono differenze molto più interessanti che nel codice stesso.
+
+-------------------------------------------------------
+Nuovo esperimento, basato su Non-perturbative interpretation of the Bloch vector’s path
+beyond rotating wave approximation.
+
+Prompt:
+Consider a two-level system driven by a monochromatic field described by
+H(t)= epsilon0 |0><0| + epsilon1 |1><1| + 2 Omega cos(omega t)(|0><1| + |1><0|)
+Simulate the Bloch-vector trajectory for different values of ω.
+Describe the most relevant geometric features and explain their physical origin.
