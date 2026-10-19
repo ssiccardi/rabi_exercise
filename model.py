@@ -86,6 +86,25 @@ def plot_bloch_vector(psi0, H):
     ax.set_zlabel('Z')
     plt.show()
 
+def plot_analytical_vs_numerical(psi0, omega, Omega):
+    probabilities_list = []
+    for t in np.linspace(0, 10, 100):
+        H = Hamiltonian(omega, Omega)
+        psi = evolve_states(psi0, H, t)
+        p_numerical = probabilities(psi)
+        p_analytical = analytical_probabilities(omega, Omega, t)
+        probabilities_list.append((p_numerical, p_analytical))
+
+    probabilities_array = np.array(probabilities_list)
+    plt.plot(np.linspace(0, 10, 100), probabilities_array[:, 0, 0], label='|0> Numerical')
+    plt.plot(np.linspace(0, 10, 100), probabilities_array[:, 0, 1], label='|1> Numerical')
+    plt.plot(np.linspace(0, 10, 100), probabilities_array[:, 1, 0], '--', label='|0> Analytical')
+    plt.plot(np.linspace(0, 10, 100), probabilities_array[:, 1, 1], '--', label='|1> Analytical')
+    plt.xlabel('Time')
+    plt.ylabel('Probability')
+    plt.legend()
+    plt.show()
+
 def test_unitary():
     # test that time evolution is unitary
     omega = 1.0
@@ -186,3 +205,4 @@ if __name__ == "__main__":
     psi_target = np.array([0.0, 1.0])
     plot_fidelity_with_target(psi0, H, psi_target)
     plot_bloch_vector(psi0, H)
+    plot_analytical_vs_numerical(psi0, 1.0, 1.0)

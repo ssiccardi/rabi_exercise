@@ -10,3 +10,60 @@ Consider a system with Hamiltonian
 
  We want to simulate the evolution:
  |psi(t)> = exp(-iHt) |psi(0)>
+
+** prompts to check **
+Simulate a two-level quantum system with Hamiltonian H = ω/2 σz + Ω σx. 
+Plot the probability of measuring state |1⟩ and verify the correctness of the simulation.
+-> che cosa viene verificato?
+- haiku 4.5 usa la libreria qutip, lo faccio riscrivere
+  controlla solo che il tempo per arrivare al massimo di probabilita per |1> sia uguale e non torna
+- opus 5.5 controlli:
+Verification (omega = 1.0, Omega = 1.0, R = 1.1180):
+  [PASS] H is Hermitian
+  [PASS] eigenvalues are +-R
+  [PASS] norm conserved (eigen)
+  [PASS] norm conserved (RK4)
+  [PASS] P0 + P1 = 1
+  [PASS] eigen vs analytic (max err 6.7e-16)
+  [PASS] RK4 vs analytic (max err 5.4e-13)
+  [PASS] closed-form propagator
+  [PASS] resonant pi-pulse gives P1 = 1
+  [PASS] no drive (Omega = 0) gives P1 = 0
+  Expected max P1 = Omega^2/R^2 = 0.8000, simulated = 0.8000
+  Expected period = pi/R = 2.8099
+
+Compute the fidelity between the evolved state and a target state.
+-> normalizza lo stato?
+- opus 5.5 normalizzazione ok
+- haiku 4.5 normalizzazione ok, ma resta il fatto che il "massimo" scelto non e' il primo a causa di
+  piccole differenze numeriche fra i massimi
+
+Simulate a qubit initialized in |0⟩ under the Hamiltonian H = Ω σx and verify that 
+the target state |1⟩ is reached at time π/Ω.
+-> il tempo corretto e' /2
+- entrambi hanno fatto notare che l'affermazione e' sbagliata, con programmi molto simili. Però
+  ho usato prima opus, non vorrei che fosse rimato qualcosa in memoria!
+
+Verify numerically that the Bloch vector remains on the unit sphere during the evolution, and explain why.
+-> dice che e' per la purezza dello stato?
+- haiku 4.5 lo dice e sembra fare uno sviluppo ragionevole. Anche mettendo il programma in una nuova
+  cartella, aprendo una nuova chat e chiedendo di non usare altri files
+- opus 5.5 chiedo di verificare se e' corretto e se puo' essere migliorato, aggiunge qualcosa...
+
+Prendi uno dei prompt-trappola sopra.
+
+Fallo eseguire a:
+
+Copilot in VS Code;
+me;
+eventualmente un altro LLM.
+
+Poi non guardare il codice.
+
+Guarda invece:
+
+quali assunzioni abbiamo fatto;
+quali test abbiamo proposto;
+quali verifiche fisiche abbiamo ritenuto importanti.
+
+Secondo me lì emergono differenze molto più interessanti che nel codice stesso.
