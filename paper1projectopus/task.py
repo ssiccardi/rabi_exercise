@@ -163,12 +163,30 @@ def rwa_summary(eps0, eps1, Omega, omega):
     return delta, omega_r, z_min
 
 
+def one_period_propagator(eps0, eps1, Omega, omega):
+    """Monodromy matrix U(T, 0), built column by column from the basis states."""
+    t_eval = np.array([0.0, 2.0 * np.pi / omega])
+    return np.column_stack([evolve_states(e, t_eval, eps0, eps1, Omega, omega)[-1]
+                            for e in np.eye(2)])
+
+
 def floquet_quasienergies(eps0, eps1, Omega, omega):
     period = 2.0 * np.pi / omega
-    t_eval = np.array([0.0, period])
-    U = np.column_stack([evolve_states(e, t_eval, eps0, eps1, Omega, omega)[-1]
-                         for e in np.eye(2)])
+    U = one_period_propagator(eps0, eps1, Omega, omega)
     return -np.angle(np.linalg.eigvals(U)) / period
+
+
+def stroboscopic_max_transfer(eps0, eps1, Omega, omega):
+    """sup_n |<1|U(T)^n|0>|^2, from U(T) = e^{i phi}(cos a - i sin a n.sigma).
+
+    Sampled at t = nT the Bloch vector rotates about the Floquet axis n, so the
+    best transfer from the north pole is 1 - n_z^2.  Written with matrix
+    elements this needs no eigenvectors (ill-conditioned near crossings).
+    """
+    U = one_period_propagator(eps0, eps1, Omega, omega)
+    off = abs(U[1, 0]) ** 2
+    diag = abs(U[1, 1] - U[0, 0]) ** 2 / 4.0
+    return off / (off + diag) if off + diag > 0 else 0.0
 
 
 def floquet_gap(eps0, eps1, Omega, omega):
@@ -395,10 +413,69 @@ def test_bloch_siegert_shift():
     assert np.hypot(coef[1], coef[2]) > 0.9
 
 
+def test_micromotion_amplitude():
+    # In the rotating frame the counter-rotating field drives circles of radius
+    # rho = 2 Omega / (omega + omega0); the exact curve starts on the RWA one,
+    # so its maximum distance from it is the diameter 2 rho (short window, so
+    # that the O(Omega^2) Bloch-Siegert drift is negligible).
+    Omega = 0.01
+    for omega in (0.8, 1.0, 1.5):
+        res = simulate([omega], 0.0, 1.0, Omega, 2 * np.pi, 0.002)[0]
+        dev = np.max(np.linalg.norm(res["rot"] - res["rwa_rot"], axis=1))
+        expected = 4 * Omega / (omega + 1.0)
+        assert abs(dev - expected) < 0.02 * expected
+
+
+def test_stroboscopic_max_transfer_formula():
+    U_args = (0.0, 1.0, 0.1, 0.9)
+    U = one_period_propagator(*U_args)
+    psi = np.array([1.0, 0.0], dtype=complex)
+    best = 0.0
+    for _ in range(20000):
+        psi = U @ psi
+        best = max(best, abs(psi[1]) ** 2)
+    assert abs(stroboscopic_max_transfer(*U_args) - best) < 1e-4
+
+
+def test_three_photon_resonance():
+    # Odd k-photon resonances are avoided crossings of the Floquet levels with
+    # full population transfer.  Second-order level shifts (both one-photon
+    # couplings are off resonant) give omega_3 ~ omega0/3 + 3 Omega^2/(2 omega0).
+    eps0, eps1, Omega = 0.0, 1.0, 0.1
+    gap = minimize_scalar(lambda w: floquet_gap(eps0, eps1, Omega, w),
+                          bounds=(0.33, 0.37), method="bounded",
+                          options={"xatol": 1e-9})
+    shift = 1.5 * Omega ** 2
+    assert abs(gap.x - (1 / 3 + shift)) < 0.1 * shift
+    assert 1e-3 < gap.fun < 1e-2
+    peak = minimize_scalar(lambda w: -stroboscopic_max_transfer(eps0, eps1, Omega, w),
+                           bounds=(gap.x - 3e-3, gap.x + 3e-3), method="bounded",
+                           options={"xatol": 1e-9})
+    assert -peak.fun > 0.999
+
+
+def test_no_two_photon_resonance():
+    # Generalised parity sigma_z H(t + T/2) sigma_z = H(t) forbids even
+    # k-photon couplings: the levels cross exactly (no gap) near
+    # omega0/2 + 8 Omega^2/(3 omega0), and no transfer peak appears there.
+    eps0, eps1, Omega = 0.0, 1.0, 0.1
+    cross = minimize_scalar(lambda w: floquet_gap(eps0, eps1, Omega, w),
+                            bounds=(0.45, 0.60), method="bounded",
+                            options={"xatol": 1e-10})
+    shift = 8 * Omega ** 2 / 3
+    assert abs(cross.x - (0.5 + shift)) < 0.1 * shift
+    assert cross.fun < 1e-6
+    ws = np.append(np.linspace(cross.x - 0.02, cross.x + 0.02, 21), cross.x)
+    transfer = [stroboscopic_max_transfer(eps0, eps1, Omega, w) for w in ws]
+    assert max(transfer) < 0.5
+
+
 def run_tests():
     tests = [test_bloch_vector_stays_on_unit_sphere, test_free_precession,
              test_schrodinger_vs_bloch_equation, test_global_energy_shift_invariance,
-             test_rwa_limit, test_bloch_siegert_shift]
+             test_rwa_limit, test_bloch_siegert_shift, test_micromotion_amplitude,
+             test_stroboscopic_max_transfer_formula, test_three_photon_resonance,
+             test_no_two_photon_resonance]
     for test in tests:
         test()
         print("[PASS] %s" % test.__name__)
